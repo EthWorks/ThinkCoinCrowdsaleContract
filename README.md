@@ -1,1 +1,1 @@
-# SaleManagement
+# ThinkCoin Crowdsale Contract
