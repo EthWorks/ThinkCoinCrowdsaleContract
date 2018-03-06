@@ -13,6 +13,8 @@ contract Crowdsale is Ownable, Pausable {
   event MintApproved(address indexed _beneficiary, uint256 _tokenAmount);
   event MintLockedApproved(address indexed _beneficiary, uint256 _tokenAmount);
   event MintedAllocation(address indexed _beneficiary, uint256 _tokenAmount);
+  event MinterChanged(address _newMinter);
+  event ApproverChanged(address _newApprover);
 
   ThinkCoin public thinkCoin;
   LockingContract public lockingContract;
@@ -125,7 +127,7 @@ contract Crowdsale is Ownable, Pausable {
   function finishMinting() public onlyOwner saleEnded {
     require(thinkCoin.totalSupply() == thinkCoin.cap());
     thinkCoin.finishMinting();
-    thinkCoin.transferOwnership(msg.sender);
+    giveUpTokenOwnership();
   }
 
   function giveUpTokenOwnership() public onlyOwner saleEnded {
@@ -134,10 +136,12 @@ contract Crowdsale is Ownable, Pausable {
 
   function changeMinter(address _newMinter) public onlyOwner {
     minter = _newMinter;
+    MinterChanged(_newMinter);
   }
 
   function changeApprover(address _newApprover) public onlyOwner {
     approver = _newApprover;
+    ApproverChanged(_newApprover);
   }
 
   function() public payable {
