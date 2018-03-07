@@ -7,8 +7,7 @@
     "dev:lint": "./node_modules/.bin/eslint **/*.js",
     "dev:compile": "truffle compile",
     "dev:test": "rm ./build/contracts/* ; truffle compile && mocha --require test/testPolyfill.js --require babel-polyfill --require babel-register --recursive test/unitTests/",
-    "deploy": "node ./scripts/deploy.js",
-    "estimate": "node ./scripts/deploy.js --estimate"
+    "deploy": "node ./scripts/deploy.js"
   },
   "author": "",
   "license": "ISC",
