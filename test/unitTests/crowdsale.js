@@ -3,10 +3,13 @@ import crowdsaleJson from '../../build/contracts/Crowdsale.json';
 import tokenJson from '../../build/contracts/ThinkCoin.json';
 import lockingJson from '../../build/contracts/LockingContract.json';
 import chai from 'chai';
+import {bnChaiInit} from 'bn-chai';
+
 const {expect} = chai;
+const web3 = createWeb3();
+chai.use(bnChaiInit(web3.utils.BN));
 
 describe('Crowdsale', () => {
-  const web3 = createWeb3();
   const {BN} = web3.utils;
   const duration = durationInit(web3);
   let tokenContract;
@@ -69,7 +72,7 @@ describe('Crowdsale', () => {
 
   it('should be properly deployed', async () => {
     const actualCap = new BN(await tokenContract.methods.cap().call({from: tokenDeployer}));
-    expect(tokenCap.eq(actualCap)).to.be.true;
+    expect(tokenCap).to.be.BN.equal(actualCap);
     const actualTokenAddress = await saleContract.methods.thinkCoin().call({from: saleOwner});
     expect(actualTokenAddress).to.be.equal(tokenContractAddress);
     const actualTokenOwner = await tokenContract.methods.owner().call({from: tokenDeployer});
@@ -214,28 +217,28 @@ describe('Crowdsale', () => {
 
     const testShouldProposeMint = async (beneficiary, tokenAmount, from) => {
       await proposeMint(beneficiary, tokenAmount, from);
-      const proposal = new BN(await getMintProposal(beneficiary));
-      expect(proposal.eq(tokenAmount)).to.be.true;
+      const proposal = await getMintProposal(beneficiary);
+      expect(proposal).to.be.BN.equal(tokenAmount);
     };
 
     const testShouldNotProposeMint = async (beneficiary, tokenAmount, from) => {
       const initialProposal = new BN(await getMintProposal(beneficiary));
       await expectThrow(proposeMint(beneficiary, tokenAmount, from));
-      const proposal = new BN(await getMintProposal(beneficiary));
-      expect(proposal.eq(initialProposal)).to.be.true;
+      const proposal = await getMintProposal(beneficiary);
+      expect(proposal).to.be.BN.equal(initialProposal);
     };
 
     const testShouldProposeMintLocked = async (beneficiary, tokenAmount, from) => {
       await proposeMintLocked(beneficiary, tokenAmount, from);
-      const proposal = new BN(await getMintLockedProposal(beneficiary));
-      expect(proposal.eq(tokenAmount)).to.be.true;
+      const proposal = await getMintLockedProposal(beneficiary);
+      expect(proposal).to.be.BN.equal(tokenAmount);
     };
 
     const testShouldNotProposeMintLocked = async (beneficiary, tokenAmount, from) => {
       const initialProposal = new BN(await getMintLockedProposal(beneficiary));
       await expectThrow(proposeMintLocked(beneficiary, tokenAmount, from));
-      const proposal = new BN(await getMintLockedProposal(beneficiary));
-      expect(proposal.eq(initialProposal)).to.be.true;
+      const proposal = await getMintLockedProposal(beneficiary);
+      expect(proposal).to.be.BN.equal(initialProposal);
     };
 
     describe('Before crowdsale starts', async () => {
@@ -315,28 +318,28 @@ describe('Crowdsale', () => {
       const initialBalance = new BN(await balanceOf(beneficiary));
       await approveMint(beneficiary, tokenAmount, from);
       const balance = new BN(await balanceOf(beneficiary));
-      expect(balance.sub(initialBalance).eq(tokenAmount)).to.be.true;
+      expect(balance.sub(initialBalance)).to.be.BN.equal(tokenAmount);
     };
 
     const testShouldNotApproveMint = async (beneficiary, tokenAmount, from) => {
       const initialBalance = new BN(await balanceOf(beneficiary));
       await expectThrow(approveMint(beneficiary, tokenAmount, from));
-      const balance = new BN(await balanceOf(beneficiary));
-      expect(balance.eq(initialBalance)).to.be.true;
+      const balance = await balanceOf(beneficiary);
+      expect(balance).to.be.BN.equal(initialBalance);
     };
 
     const testShouldApproveMintLocked = async (beneficiary, tokenAmount, from) => {
       const initialBalance = new BN(await lockedBalanceOf(beneficiary));
       await approveMintLocked(beneficiary, tokenAmount, from);
       const balance = new BN(await lockedBalanceOf(beneficiary));
-      expect(balance.sub(initialBalance).eq(tokenAmount)).to.be.true;
+      expect(balance.sub(initialBalance)).to.be.BN.equal(tokenAmount);
     };
 
     const testShouldNotApproveMintLocked = async (beneficiary, tokenAmount, from) => {
       const initialBalance = new BN(await lockedBalanceOf(beneficiary));
       await expectThrow(approveMintLocked(beneficiary, tokenAmount, from));
-      const balance = new BN(await lockedBalanceOf(beneficiary));
-      expect(balance.eq(initialBalance)).to.be.true;
+      const balance = await lockedBalanceOf(beneficiary);
+      expect(balance).to.be.BN.equal(initialBalance);
     };
 
     describe('Before crowdsale starts', async () => {
@@ -418,14 +421,14 @@ describe('Crowdsale', () => {
       const initialBalance = new BN(await balanceOf(beneficiary));
       await mintAllocation(beneficiary, tokenAmount, from);
       const balance = new BN(await balanceOf(beneficiary));
-      expect(balance.sub(initialBalance).eq(tokenAmount)).to.be.true;
+      expect(balance.sub(initialBalance)).to.be.BN.equal(tokenAmount);
     };
 
     const testShouldNotMintAllocation = async (beneficiary, tokenAmount, from) => {
       const initialBalance = new BN(await balanceOf(beneficiary));
       await expectThrow(mintAllocation(beneficiary, tokenAmount, from));
-      const balance = new BN(await balanceOf(beneficiary));
-      expect(balance.eq(initialBalance)).to.be.true;
+      const balance = await balanceOf(beneficiary);
+      expect(balance).to.be.BN.equal(initialBalance);
     };
 
     describe('Before crowdsale starts', async () => {

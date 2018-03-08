@@ -2,7 +2,11 @@ import {createWeb3, deployContract, expectThrow, increaseTimeTo, durationInit, l
 import thinkCoinJson from '../../build/contracts/ThinkCoin.json';
 import lockingJson from '../../build/contracts/LockingContract.json';
 import chai from 'chai';
+import {bnChaiInit} from 'bn-chai';
+
 const {expect} = chai;
+const web3 = createWeb3();
+chai.use(bnChaiInit(web3.utils.BN));
 
 describe('LockingContract', () => {
   let tokenOwner;
@@ -72,22 +76,22 @@ describe('LockingContract', () => {
       await noteTokens(client1, 100);
       await mint(lockingContractAddress, 1000);
       await noteTokens(client2, 1000);
-      const balance = new BN(await lockedBalanceOf(client1));
-      expect(balance.eq(new BN(100))).to.be.true;
+      const balance = await lockedBalanceOf(client1);
+      expect(balance).to.be.BN.equal(100);
     });
 
     it('should not allow to note tokens if not minted', async () => {
       await expectThrow(noteTokens(client2, 1000));
-      const balance2 = new BN(await lockedBalanceOf(client2));
-      expect(balance2.eq(new BN(0))).to.be.true;
+      const balance2 = await lockedBalanceOf(client2);
+      expect(balance2).to.be.BN.zero;
     });
 
     it('should not allow to note tokens when unlocked', async () => {
       await advanceToAfterLockingPeriod();
       await mint(lockingContractAddress, 100);
       await expectThrow(noteTokens(client1, 100));
-      const balance = new BN(await lockedBalanceOf(client1));
-      expect(balance.eq(new BN(0))).to.be.true;
+      const balance = await lockedBalanceOf(client1);
+      expect(balance).to.be.BN.zero;
     });
 
     it('should allow to note tokens to the same person twice', async () => {
@@ -95,8 +99,8 @@ describe('LockingContract', () => {
       await noteTokens(client1, 100);
       await mint(lockingContractAddress, 1000);
       await noteTokens(client1, 1000);
-      const balance = new BN(await lockedBalanceOf(client1));
-      expect(balance.eq(new BN(1100))).to.be.true;
+      const balance = await lockedBalanceOf(client1);
+      expect(balance).to.be.BN.equal(1100);
     });
   });
 
@@ -141,22 +145,22 @@ describe('LockingContract', () => {
       await advanceToAfterLockingPeriod();
       await finishMinting();
       await releaseTokens(client1);
-      const balance = new BN(await balanceOf(client1));
-      expect(balance.eq(new BN(100))).to.be.true;
+      const balance = await balanceOf(client1);
+      expect(balance).to.be.BN.equal(100);
     });
 
     it('should allow to release by anyone', async () => {
       await advanceToAfterLockingPeriod();
       await finishMinting();
       await releaseTokens(client1, notTheOwner);
-      const balance = new BN(await balanceOf(client1));
-      expect(balance.eq(new BN(100))).to.be.true;
+      const balance = await balanceOf(client1);
+      expect(balance).to.be.BN.equal(100);
     });
 
     it('should not allow to release the tokens when locked', async () => {
       await expectThrow(releaseTokens(client1));
-      const balance = new BN(await balanceOf(client1));
-      expect(balance.eq(new BN(0))).to.be.true;
+      const balance = await balanceOf(client1);
+      expect(balance).to.be.BN.zero;
     });
 
     it('should not release the tokens twice', async () => {
@@ -164,8 +168,8 @@ describe('LockingContract', () => {
       await finishMinting();
       await releaseTokens(client1, lockingOwner);
       await releaseTokens(client1, lockingOwner);
-      const balance = new BN(await balanceOf(client1));
-      expect(balance.eq(new BN(100))).to.be.true;
+      const balance = await balanceOf(client1);
+      expect(balance).to.be.BN.equal(100);
     });
   });
 });
