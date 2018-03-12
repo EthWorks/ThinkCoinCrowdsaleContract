@@ -1,11 +1,11 @@
 import {createWeb3, deployContract, expectThrow} from '../testUtils.js';
 import thinkCoinJson from '../../build/contracts/ThinkCoin.json';
 import chai from 'chai';
-import {bnChaiInit} from 'bn-chai';
+import bnChai from 'bn-chai';
 
 const {expect} = chai;
 const web3 = createWeb3();
-chai.use(bnChaiInit(web3.utils.BN));
+chai.use(bnChai(web3.utils.BN));
 
 describe('ThinkCoin', () => {
   const web3 = createWeb3();
@@ -61,47 +61,47 @@ describe('ThinkCoin', () => {
     const decimals = new BN(await tokenContract.methods.decimals().call({from: tokenOwner}));
     expect(name).to.equal('ThinkCoin');
     expect(symbol).to.equal('TCO');
-    expect(cap).to.be.BN.equal(tokenCap);
-    expect(decimals).to.be.BN.equal(18);
+    expect(cap).to.eq.BN(tokenCap);
+    expect(decimals).to.eq.BN(18);
   });
 
   it('should not receive ether transfers', async () => {
     const initialEtherBalance = new BN(await getEtherBalance());
     await expectThrow(sendTransaction(tokenOwner, 100));
     const etherBalance = await getEtherBalance();
-    expect(initialEtherBalance).to.be.BN.equal(etherBalance);
+    expect(initialEtherBalance).to.eq.BN(etherBalance);
   });
 
   it('should allow to mint tokens by the owner', async () => {
     await mint(client1, 100);
     const tokens = await balanceOf(client1);
-    expect(tokens).to.be.BN.equal(100);
+    expect(tokens).to.eq.BN(100);
   });
 
   it('should not allow to mint tokens by a third party', async () => {
     await expectThrow(mint(client1, 100, notTheOwner));
     const tokens = await balanceOf(client1);
-    expect(tokens).to.be.BN.zero;
+    expect(tokens).to.be.zero;
   });
 
   it('should not allow to mint tokens if minting finished', async () => {
     await finishMinting();
     await expectThrow(mint(client1, 100));
     const tokens = await balanceOf(client1);
-    expect(tokens).to.be.BN.zero;
+    expect(tokens).to.be.zero;
   });
 
   describe('hard cap', async () => {
     it('should start with the correct cap', async () => {
       const cap = await tokenContract.methods.cap().call({from: tokenOwner});
-      expect(cap).to.be.BN.equal(tokenCap);
+      expect(cap).to.eq.BN(tokenCap);
     });
 
     it('should mint when amount is less than cap', async () => {
       const amount = tokenCap.sub(new BN(1));
       await mint(client1, amount);
       const balance = await balanceOf(client1);
-      expect(balance).to.be.BN.equal(amount);
+      expect(balance).to.eq.BN(amount);
     });
 
     it('should fail to mint if the amount exceeds the cap', async () => {
@@ -123,8 +123,8 @@ describe('ThinkCoin', () => {
       await transfer(client2, 10, client1);
       const balance1 = await balanceOf(client1);
       const balance2 = await balanceOf(client2);
-      expect(balance1).to.be.BN.equal(90);
-      expect(balance2).to.be.BN.equal(10);
+      expect(balance1).to.eq.BN(90);
+      expect(balance2).to.eq.BN(10);
     });
 
     it('should allow to transfer from if minting is finished', async () => {
@@ -133,16 +133,16 @@ describe('ThinkCoin', () => {
       await transferFrom(client1, client2, 10, client3);
       const balance1 = await balanceOf(client1);
       const balance2 = await balanceOf(client2);
-      expect(balance1).to.be.BN.equal(90);
-      expect(balance2).to.be.BN.equal(10);
+      expect(balance1).to.eq.BN(90);
+      expect(balance2).to.eq.BN(10);
     });
 
     it('should not allow to transfer if minting is not finished', async () => {
       await expectThrow(transfer(client2, 10, client1));
       const balance1 = await balanceOf(client1);
       const balance2 = await balanceOf(client2);
-      expect(balance1).to.be.BN.equal(100);
-      expect(balance2).to.be.BN.zero;
+      expect(balance1).to.eq.BN(100);
+      expect(balance2).to.be.zero;
     });
 
     it('should not allow to transfer from if minting is not finished', async () => {
@@ -150,8 +150,8 @@ describe('ThinkCoin', () => {
       await expectThrow(transferFrom(client1, client2, 10, client3));
       const balance1 = await balanceOf(client1);
       const balance2 = await balanceOf(client2);
-      expect(balance1).to.be.BN.equal(100);
-      expect(balance2).to.be.BN.zero;
+      expect(balance1).to.eq.BN(100);
+      expect(balance2).to.be.zero;
     });
   });
 });
