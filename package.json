@@ -7,7 +7,8 @@
     "dev:lint": "./node_modules/.bin/eslint **/*.js",
     "dev:compile": "truffle compile",
     "dev:test": "rm ./build/contracts/* ; truffle compile && mocha --require test/testPolyfill.js --require babel-polyfill --require babel-register --recursive test/unitTests/",
-    "deploy": "node ./scripts/deploy.js"
+    "deploy:ganache": "node ./scripts/deploy.js --port 7545",
+    "deploy:parity": "node ./scripts/deploy.js --port 8545"
   },
   "author": "",
   "license": "ISC",

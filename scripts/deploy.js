@@ -3,8 +3,13 @@ var Web3 = require('web3');
 var thinkCoinJson = require('../build/contracts/ThinkCoin.json');
 var crowdsaleJson = require('../build/contracts/Crowdsale.json');
 
-//var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:7545"));
+var args = process.argv.slice(2);
+if (args.length < 2 || args[0] != '--port') {
+  console.log('Please specify an http provider port (-- port)')
+  process.exit(1);
+}
+var port = args[1];
+var web3 = new Web3(new Web3.providers.HttpProvider(`http://localhost:${port}`));
 var gas = 2900000;
 var tokenCap = web3.utils.toWei('500000000');
 var lockingPeriod = 60*60*24*30*3; // 3M
@@ -18,7 +23,7 @@ function handleError(err) {
 }
 
 function transferOwnership(owner, tokenContract, crowdsaleContract) {
-  console.log('transferring token ownership...');
+  console.log('transferring token ownership... (check metamask / parity chrome extension)');
   tokenContract.methods.transferOwnership(crowdsaleContract.options.address)
   .send({from: owner, gas: gas})
   .then(() => {
@@ -28,7 +33,7 @@ function transferOwnership(owner, tokenContract, crowdsaleContract) {
 }
 
 function deployCrowdsale(owner, tokenContract) {
-  console.log('deploying crowdsale...');
+  console.log('deploying crowdsale... (check metamask / parity chrome extension)');
   var crowdsaleContract = new web3.eth.Contract(crowdsaleJson.abi);
   var constructorArgs = [
     tokenContract.options.address,
@@ -48,7 +53,7 @@ function deployCrowdsale(owner, tokenContract) {
 }
 
 function deployToken(owner) {
-  console.log('deploying token...');
+  console.log('deploying token... (check metamask / parity chrome extension)');
   var tokenContract = new web3.eth.Contract(thinkCoinJson.abi);
   tokenContract.deploy({
     data: thinkCoinJson.bytecode, arguments: [tokenCap]
