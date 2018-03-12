@@ -16,7 +16,7 @@ contract Crowdsale is Ownable, Pausable {
   event MinterChanged(address _newMinter);
   event ApproverChanged(address _newApprover);
 
-  ThinkCoin public thinkCoin;
+  ThinkCoin public token;
   LockingContract public lockingContract;
   address public minter; // proposes mintages of tokens
   address public approver; // approves proposed mintages
@@ -26,7 +26,7 @@ contract Crowdsale is Ownable, Pausable {
   uint256 public saleStartTime;
   uint256 public saleEndTime;
 
-  function Crowdsale(ThinkCoin _thinkCoin,
+  function Crowdsale(ThinkCoin _token,
                      uint256 _lockingPeriod,
                      address _minter,
                      address _approver,
@@ -39,8 +39,8 @@ contract Crowdsale is Ownable, Pausable {
     require(_saleEndTime > now);
     require(_lockingPeriod > 0);
 
-    thinkCoin = _thinkCoin;
-    lockingContract = new LockingContract(thinkCoin, saleEndTime + _lockingPeriod);    
+    token = _token;
+    lockingContract = new LockingContract(token, saleEndTime + _lockingPeriod);    
     minter = _minter;
     approver = _approver;
     saleCap = _saleCap;
@@ -74,7 +74,7 @@ contract Crowdsale is Ownable, Pausable {
   }
 
   function exceedsSaleCap(uint256 _additionalAmount) internal view returns(bool) {
-    uint256 totalSupply = thinkCoin.totalSupply();
+    uint256 totalSupply = token.totalSupply();
     return totalSupply.add(_additionalAmount) > saleCap;
   }
 
@@ -104,7 +104,7 @@ contract Crowdsale is Ownable, Pausable {
     require(_tokenAmount > 0);
     require(mintProposals[_beneficiary] == _tokenAmount);
     mintProposals[_beneficiary] = 0;
-    thinkCoin.mint(_beneficiary, _tokenAmount);
+    token.mint(_beneficiary, _tokenAmount);
     MintApproved(_beneficiary, _tokenAmount);
   }
 
@@ -113,25 +113,25 @@ contract Crowdsale is Ownable, Pausable {
     require(_tokenAmount > 0);
     require(mintLockedProposals[_beneficiary] == _tokenAmount);
     mintLockedProposals[_beneficiary] = 0;
-    thinkCoin.mint(lockingContract, _tokenAmount);
+    token.mint(lockingContract, _tokenAmount);
     lockingContract.noteTokens(_beneficiary, _tokenAmount);
     MintLockedApproved(_beneficiary, _tokenAmount);
   }
 
   function mintAllocation(address _beneficiary, uint256 _tokenAmount) public onlyOwner saleEnded {
     require(_tokenAmount > 0);
-    thinkCoin.mint(_beneficiary, _tokenAmount);
+    token.mint(_beneficiary, _tokenAmount);
     MintedAllocation(_beneficiary, _tokenAmount);
   }
 
   function finishMinting() public onlyOwner saleEnded {
-    require(thinkCoin.totalSupply() == thinkCoin.cap());
-    thinkCoin.finishMinting();
-    giveUpTokenOwnership();
+    require(token.totalSupply() == token.cap());
+    token.finishMinting();
+    transferTokenOwnership();
   }
 
-  function giveUpTokenOwnership() public onlyOwner saleEnded {
-    thinkCoin.transferOwnership(msg.sender);
+  function transferTokenOwnership() public onlyOwner saleEnded {
+    token.transferOwnership(msg.sender);
   }
 
   function changeMinter(address _newMinter) public onlyOwner {

@@ -58,9 +58,11 @@ describe('ThinkCoin', () => {
     const name = await tokenContract.methods.name().call({from: tokenOwner});
     const symbol = await tokenContract.methods.symbol().call({from: tokenOwner});
     const cap = new BN(await tokenContract.methods.cap().call({from: tokenOwner}));
+    const decimals = new BN(await tokenContract.methods.decimals().call({from: tokenOwner}));
     expect(name).to.equal('ThinkCoin');
     expect(symbol).to.equal('TCO');
     expect(cap).to.be.BN.equal(tokenCap);
+    expect(decimals).to.be.BN.equal(18);
   });
 
   it('should not receive ether transfers', async () => {

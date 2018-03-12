@@ -73,7 +73,7 @@ describe('Crowdsale', () => {
   it('should be properly deployed', async () => {
     const actualCap = new BN(await tokenContract.methods.cap().call({from: tokenDeployer}));
     expect(tokenCap).to.be.BN.equal(actualCap);
-    const actualTokenAddress = await saleContract.methods.thinkCoin().call({from: saleOwner});
+    const actualTokenAddress = await saleContract.methods.token().call({from: saleOwner});
     expect(actualTokenAddress).to.be.equal(tokenContractAddress);
     const actualTokenOwner = await tokenContract.methods.owner().call({from: tokenDeployer});
     expect(actualTokenOwner).to.be.equal(saleContractAddress);
@@ -89,7 +89,7 @@ describe('Crowdsale', () => {
   const balanceOf = async (client) => tokenContract.methods.balanceOf(client).call({from: saleOwner});
   const changeMinter = async (newMinter, from) => saleContract.methods.changeMinter(newMinter).send({from});
   const changeApprover = async (newApprover, from) => saleContract.methods.changeApprover(newApprover).send({from});
-  const giveUpTokenOwnership = async (from) => saleContract.methods.giveUpTokenOwnership().send({from});
+  const transferTokenOwnership = async (from) => saleContract.methods.transferTokenOwnership().send({from});
 
   const proposeMint = async (beneficiary, tokenAmount, from) =>
     saleContract.methods.proposeMint(beneficiary, tokenAmount).send({from});
@@ -140,14 +140,14 @@ describe('Crowdsale', () => {
       expect(actualApprover).to.be.equal(approver);
     };
 
-    const testShouldGiveUpTokenOwnership = async (from = saleOwner) => {
-      await giveUpTokenOwnership(from);
+    const testShouldTransferTokenOwnership = async (from = saleOwner) => {
+      await transferTokenOwnership(from);
       const actualOwner = await tokenContract.methods.owner().call();
       expect(actualOwner).to.be.equal(from);
     };
 
-    const testShouldNotGiveUpTokenOwnership = async (from = saleOwner) => {
-      await expectThrow(giveUpTokenOwnership(from));
+    const testShouldNotTransferTokenOwnership = async (from = saleOwner) => {
+      await expectThrow(transferTokenOwnership(from));
       const actualOwner = await tokenContract.methods.owner().call();
       expect(actualOwner).to.be.equal(saleContractAddress);
     };
@@ -165,8 +165,8 @@ describe('Crowdsale', () => {
       it('should not be possible to change approver by a third party',
         async () => testShouldNotChangeApprover(contributor));
 
-      it('should not be possible to give up token ownership',
-        async () => testShouldNotGiveUpTokenOwnership(saleOwner));
+      it('should not be possible to transfer token ownership',
+        async () => testShouldNotTransferTokenOwnership(saleOwner));
     });
 
     describe('Crowdsale started', async () => {
@@ -184,8 +184,8 @@ describe('Crowdsale', () => {
       it('should not be possible to change approver by a third party',
         async () => testShouldNotChangeApprover(contributor));
 
-      it('should not be possible to give up token ownership',
-        async () => testShouldNotGiveUpTokenOwnership(saleOwner));
+      it('should not be possible to transfer token ownership',
+        async () => testShouldNotTransferTokenOwnership(saleOwner));
     });
 
     describe('Crowdsale ended', async () => {
@@ -203,11 +203,11 @@ describe('Crowdsale', () => {
       it('should not be possible to change approver by a third party',
         async () => testShouldNotChangeApprover(contributor));
 
-      it('should be possible to give up token ownership',
-        async () => testShouldGiveUpTokenOwnership(saleOwner));
+      it('should be possible to transfer token ownership',
+        async () => testShouldTransferTokenOwnership(saleOwner));
 
-      it('should not be possible to give up token ownership by third party',
-        async () => testShouldNotGiveUpTokenOwnership(contributor));
+      it('should not be possible to transfer token ownership by third party',
+        async () => testShouldNotTransferTokenOwnership(contributor));
     });
   });
 
@@ -255,7 +255,7 @@ describe('Crowdsale', () => {
       it('should allow to propose mint by minter',
         async () => testShouldProposeMint(contributor, contributionAmount, minter));
 
-      it('should allow to propose mint by minter',
+      it('should allow to propose mint locked tokens by minter',
         async () => testShouldProposeMintLocked(contributor, contributionAmount, minter));
 
       it('should not allow to propose mint by a third party',

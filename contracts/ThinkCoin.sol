@@ -4,6 +4,7 @@ import 'zeppelin-solidity/contracts/token/ERC20/MintableToken.sol';
 contract ThinkCoin is MintableToken {
   string public name = "ThinkCoin";
   string public symbol = "TCO";
+  uint8 public decimals = 18;
   uint256 public cap;
 
   function ThinkCoin(uint256 _cap) public {
