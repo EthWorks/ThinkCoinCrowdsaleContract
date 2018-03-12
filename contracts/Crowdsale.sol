@@ -125,7 +125,6 @@ contract Crowdsale is Ownable, Pausable {
   }
 
   function finishMinting() public onlyOwner saleEnded {
-    require(token.totalSupply() == token.cap());
     token.finishMinting();
     transferTokenOwnership();
   }

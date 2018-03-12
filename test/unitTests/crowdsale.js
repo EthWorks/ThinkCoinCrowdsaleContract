@@ -486,8 +486,8 @@ describe('Crowdsale', () => {
     describe('Crowdsale ended', async () => {
       beforeEach(advanceToSaleEnded);
 
-      it('should not allow to finish minting', 
-        async () => testShouldNotFinishMinting(saleOwner));
+      it('should allow to finish minting', 
+        async () => testShouldFinishMinting(saleOwner));
 
       describe('Token cap reached', async () => {
         beforeEach(async () => {
