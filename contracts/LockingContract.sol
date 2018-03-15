@@ -1,14 +1,14 @@
 pragma solidity ^0.4.19;
 import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
-import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
+import 'zeppelin-solidity/contracts/token/ERC20/ERC20.sol';
 import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 
 contract LockingContract is Ownable {
   using SafeMath for uint256;
 
-  StandardToken public tokenContract;
-  mapping(address => uint256) tokens;
-  uint256 totalTokens;
+  ERC20 public tokenContract;
+  mapping(address => uint256) public tokens;
+  uint256 public totalTokens;
   uint256 public unlockTime;
 
   function isLocked() public view returns(bool) {
@@ -25,7 +25,7 @@ contract LockingContract is Ownable {
     _;
   }
 
-  function LockingContract(StandardToken _tokenContract, uint256 _lockingDuration) public {
+  function LockingContract(ERC20 _tokenContract, uint256 _lockingDuration) public {
     require(_lockingDuration > 0);
     unlockTime = now.add(_lockingDuration);
     tokenContract = _tokenContract;
