@@ -20,9 +20,9 @@ describe('Crowdsale', () => {
   let saleContractAddress;
   let lockingContract;
   let accounts;
-  let minter;
+  let proposer;
   let approver;
-  let altMinter;
+  let altProposer;
   let altApprover;
   let lockedContributor;
   let contributor;
@@ -34,7 +34,7 @@ describe('Crowdsale', () => {
 
   before(async () => {
     accounts = await web3.eth.getAccounts();
-    [, tokenDeployer, saleOwner, minter, approver, altMinter, altApprover, lockedContributor, contributor] = accounts;
+    [, tokenDeployer, saleOwner, proposer, approver, altProposer, altApprover, lockedContributor, contributor] = accounts;
   });
 
   const deployContracts = async () => {
@@ -51,7 +51,7 @@ describe('Crowdsale', () => {
     const saleArgs = [
       tokenContractAddress,
       lockingPeriod,
-      minter,
+      proposer,
       approver,
       saleCap,
       saleStartTime,
@@ -87,7 +87,7 @@ describe('Crowdsale', () => {
     
   const mintingFinished = async () => tokenContract.methods.mintingFinished().call({from: tokenDeployer});
   const balanceOf = async (client) => tokenContract.methods.balanceOf(client).call({from: saleOwner});
-  const changeMinter = async (newMinter, from) => saleContract.methods.changeMinter(newMinter).send({from});
+  const changeProposer = async (newProposer, from) => saleContract.methods.changeProposer(newProposer).send({from});
   const changeApprover = async (newApprover, from) => saleContract.methods.changeApprover(newApprover).send({from});
   const transferTokenOwnership = async (from) => saleContract.methods.transferTokenOwnership().send({from});
 
@@ -115,17 +115,17 @@ describe('Crowdsale', () => {
   const getMintLockedProposal = async (beneficiary) =>
     saleContract.methods.mintLockedProposals(beneficiary).call({from: saleOwner});
 
-  describe('Changing owner, minter and approver', async () => {
-    const testShouldChangeMinter = async (from = saleOwner) => {
-      await changeMinter(altMinter, from);
-      const actualMinter = await saleContract.methods.minter().call();
-      expect(actualMinter).to.be.equal(altMinter);
+  describe('Changing owner, proposer and approver', async () => {
+    const testShouldChangeProposer = async (from = saleOwner) => {
+      await changeProposer(altProposer, from);
+      const actualProposer = await saleContract.methods.proposer().call();
+      expect(actualProposer).to.be.equal(altProposer);
     };
 
-    const testShouldNotChangeMinter = async (from = saleOwner) => {
-      await expectThrow(changeMinter(altMinter, from));
-      const actualMinter = await saleContract.methods.minter().call();
-      expect(actualMinter).to.be.equal(minter);
+    const testShouldNotChangeProposer = async (from = saleOwner) => {
+      await expectThrow(changeProposer(altProposer, from));
+      const actualProposer = await saleContract.methods.proposer().call();
+      expect(actualProposer).to.be.equal(proposer);
     };
 
     const testShouldChangeApprover = async (from = saleOwner) => {
@@ -153,11 +153,11 @@ describe('Crowdsale', () => {
     };
 
     describe('Before crowdsale starts', async () => {
-      it('should be possible to change minter by the owner',
-        async () => testShouldChangeMinter());
+      it('should be possible to change proposer by the owner',
+        async () => testShouldChangeProposer());
 
-      it('should not be possible to change minter by a third party',
-        async () => testShouldNotChangeMinter(contributor));
+      it('should not be possible to change proposer by a third party',
+        async () => testShouldNotChangeProposer(contributor));
 
       it('should be possible to change approver by the owner',
         async () => testShouldChangeApprover());
@@ -172,11 +172,11 @@ describe('Crowdsale', () => {
     describe('Crowdsale started', async () => {
       beforeEach(advanceToSaleStarted);
 
-      it('should be possible to change minter by the owner',
-        async () => testShouldChangeMinter());
+      it('should be possible to change proposer by the owner',
+        async () => testShouldChangeProposer());
 
-      it('should not be possible to change minter by a third party',
-        async () => testShouldNotChangeMinter(contributor));
+      it('should not be possible to change proposer by a third party',
+        async () => testShouldNotChangeProposer(contributor));
 
       it('should be possible to change approver by the owner',
         async () => testShouldChangeApprover());
@@ -191,11 +191,11 @@ describe('Crowdsale', () => {
     describe('Crowdsale ended', async () => {
       beforeEach(advanceToSaleEnded);
 
-      it('should be possible to change minter by the owner',
-        async () => testShouldChangeMinter());
+      it('should be possible to change proposer by the owner',
+        async () => testShouldChangeProposer());
 
-      it('should not be possible to change minter by a third party',
-        async () => testShouldNotChangeMinter(contributor));
+      it('should not be possible to change proposer by a third party',
+        async () => testShouldNotChangeProposer(contributor));
 
       it('should be possible to change approver by the owner',
         async () => testShouldChangeApprover());
@@ -243,20 +243,20 @@ describe('Crowdsale', () => {
 
     describe('Before crowdsale starts', async () => {
       it('should not allow to propose mint',
-        async () => testShouldNotProposeMint(contributor, contributionAmount, minter));
+        async () => testShouldNotProposeMint(contributor, contributionAmount, proposer));
 
       it('should not allow to propose mint locked',
-        async () => testShouldNotProposeMintLocked(contributor, contributionAmount, minter));
+        async () => testShouldNotProposeMintLocked(contributor, contributionAmount, proposer));
     });
 
     describe('Crowdsale started', async () => {
       beforeEach(advanceToSaleStarted);
 
-      it('should allow to propose mint by minter',
-        async () => testShouldProposeMint(contributor, contributionAmount, minter));
+      it('should allow to propose mint by proposer',
+        async () => testShouldProposeMint(contributor, contributionAmount, proposer));
 
-      it('should allow to propose mint locked tokens by minter',
-        async () => testShouldProposeMintLocked(contributor, contributionAmount, minter));
+      it('should allow to propose mint locked tokens by proposer',
+        async () => testShouldProposeMintLocked(contributor, contributionAmount, proposer));
 
       it('should not allow to propose mint by a third party',
         async () => testShouldNotProposeMint(contributor, contributionAmount, contributor));
@@ -271,30 +271,30 @@ describe('Crowdsale', () => {
         async () => testShouldNotProposeMintLocked(contributor, contributionAmount, approver));
 
       it('should allow to propose mint up to the sale cap',
-        async () => testShouldProposeMint(contributor, saleCap, minter));
+        async () => testShouldProposeMint(contributor, saleCap, proposer));
 
       it('should allow to propose mint locked up to the sale cap',
-        async () => testShouldProposeMintLocked(contributor, saleCap, minter));
+        async () => testShouldProposeMintLocked(contributor, saleCap, proposer));
 
       it('should not allow to propose mint more than the sale cap',
-        async () => testShouldNotProposeMint(contributor, saleCap.add(new BN('1')), minter));
+        async () => testShouldNotProposeMint(contributor, saleCap.add(new BN('1')), proposer));
 
       it('should not allow to propose mint locked more than the sale cap',
-        async () => testShouldNotProposeMintLocked(contributor, saleCap.add(new BN('1')), minter));
+        async () => testShouldNotProposeMintLocked(contributor, saleCap.add(new BN('1')), proposer));
 
       it('should not allow to propose mint twice for the same person', async () => {
-        await testShouldProposeMint(contributor, contributionAmount, minter);
-        await testShouldNotProposeMint(contributor, differentAmount, minter);
+        await testShouldProposeMint(contributor, contributionAmount, proposer);
+        await testShouldNotProposeMint(contributor, differentAmount, proposer);
       });
 
       it('should not allow to propose mint locked twice for the same person', async () => {
-        await testShouldProposeMintLocked(contributor, contributionAmount, minter);
-        await testShouldNotProposeMintLocked(contributor, differentAmount, minter);
+        await testShouldProposeMintLocked(contributor, contributionAmount, proposer);
+        await testShouldNotProposeMintLocked(contributor, differentAmount, proposer);
       });
 
       it('should allow to propose mint and propose mint locked for the same person', async () => {
-        await testShouldProposeMintLocked(contributor, contributionAmount, minter);
-        await testShouldProposeMint(contributor, differentAmount, minter);
+        await testShouldProposeMintLocked(contributor, contributionAmount, proposer);
+        await testShouldProposeMint(contributor, differentAmount, proposer);
       });
     });
 
@@ -302,10 +302,10 @@ describe('Crowdsale', () => {
       beforeEach(advanceToSaleEnded);
 
       it('should not allow to propose mint',
-        async () => testShouldNotProposeMint(contributor, contributionAmount, minter));
+        async () => testShouldNotProposeMint(contributor, contributionAmount, proposer));
 
       it('should not allow to propose mint locked',
-        async () => testShouldNotProposeMintLocked(contributor, contributionAmount, minter));
+        async () => testShouldNotProposeMintLocked(contributor, contributionAmount, proposer));
     });
   });
 
@@ -359,8 +359,8 @@ describe('Crowdsale', () => {
     describe('Crowdsale started', async () => {
       beforeEach(async () => {
         await advanceToSaleStarted();
-        await proposeMintLocked(lockedContributor, lockedContributionAmount, minter);
-        await proposeMint(contributor, contributionAmount, minter);
+        await proposeMintLocked(lockedContributor, lockedContributionAmount, proposer);
+        await proposeMint(contributor, contributionAmount, proposer);
       });
 
       it('should allow to approve mint',
@@ -375,11 +375,11 @@ describe('Crowdsale', () => {
       it('should not allow to approve mint locked by a third party',
         async () => testShouldNotApproveMintLocked(lockedContributor, lockedContributionAmount, contributor));
 
-      it('should not allow to approve mint by minter',
-        async () => testShouldNotApproveMint(contributor, contributionAmount, minter));
+      it('should not allow to approve mint by proposer',
+        async () => testShouldNotApproveMint(contributor, contributionAmount, proposer));
 
-      it('should not allow to approve mint locked by minter',
-        async () => testShouldNotApproveMintLocked(lockedContributor, lockedContributionAmount, minter));
+      it('should not allow to approve mint locked by proposer',
+        async () => testShouldNotApproveMintLocked(lockedContributor, lockedContributionAmount, proposer));
 
       it('should not allow to approve mint for a different amount than proposed',
         async () => testShouldNotApproveMint(contributor, differentAmount, approver));
@@ -401,8 +401,8 @@ describe('Crowdsale', () => {
     describe('Crowdsale ended', async () => {
       beforeEach(async () => {
         await advanceToSaleStarted();
-        await proposeMintLocked(lockedContributor, lockedContributionAmount, minter);
-        await proposeMint(contributor, contributionAmount, minter);
+        await proposeMintLocked(lockedContributor, lockedContributionAmount, proposer);
+        await proposeMint(contributor, contributionAmount, proposer);
         await advanceToSaleEnded();
       });
 
@@ -452,8 +452,8 @@ describe('Crowdsale', () => {
       it('should not allow to mint allocation by a third party', 
         async () => testShouldNotMintAllocation(contributor, contributionAmount, contributor));
 
-      it('should not allow to mint allocation by minter', 
-        async () => testShouldNotMintAllocation(contributor, contributionAmount, minter));
+      it('should not allow to mint allocation by proposer', 
+        async () => testShouldNotMintAllocation(contributor, contributionAmount, proposer));
 
       it('should not allow to mint allocation by approver', 
         async () => testShouldNotMintAllocation(contributor, contributionAmount, approver));
@@ -500,8 +500,8 @@ describe('Crowdsale', () => {
         it('should not allow to finish minting by a third party', 
           async () => testShouldNotFinishMinting(contributor));
 
-        it('should not allow to finish minting by minter', 
-          async () => testShouldNotFinishMinting(minter));
+        it('should not allow to finish minting by proposer', 
+          async () => testShouldNotFinishMinting(proposer));
 
         it('should not allow to finish minting by approver', 
           async () => testShouldNotFinishMinting(approver));

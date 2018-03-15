@@ -38,7 +38,7 @@ function deployCrowdsale(owner, tokenContract) {
   var constructorArgs = [
     tokenContract.options.address,
     lockingPeriod,
-    owner, // minter
+    owner, // proposer
     owner, // approver
     saleCap,
     saleStartTime,
