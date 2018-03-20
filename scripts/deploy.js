@@ -13,8 +13,8 @@ var web3 = new Web3(new Web3.providers.HttpProvider(`http://localhost:${port}`))
 var gas = 2900000;
 var tokenCap = web3.utils.toWei('500000000');
 var lockingPeriod = 60*60*24*30*3; // 3M
-var saleCap = web3.utils.toWei('225000000');
-var saleStartTime = 1522065600; // 03/26/2018 @ 12:00pm (UTC)
+var saleCap = web3.utils.toWei('300000000');
+var saleStartTime = 1522072800; // 03/26/2018 @ 2:00pm (UTC)
 var saleEndTime = 1524830400; // 04/27/2018 @ 12:00pm (UTC)
 
 function handleError(err) {

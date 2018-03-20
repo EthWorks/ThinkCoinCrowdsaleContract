@@ -27,7 +27,7 @@ describe('Crowdsale', () => {
   let lockedContributor;
   let contributor;
   const tokenCap = new BN(web3.utils.toWei('500000000'));
-  const saleCap = new BN(web3.utils.toWei('225000000'));
+  const saleCap = new BN(web3.utils.toWei('300000000'));
   const lockingPeriod = duration.days(30).mul(new BN(3));
   let saleStartTime;
   let saleEndTime;
