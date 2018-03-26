@@ -20,17 +20,13 @@ contract ThinkCoin is MintableToken {
 
   // override
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(mintingFinished == true);
+    require(mintingFinished);
     return super.transfer(_to, _value);
   }
 
   // override
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(mintingFinished == true);
+    require(mintingFinished);
     return super.transferFrom(_from, _to, _value);
-  }
-
-  function() public payable {
-    revert();
   }
 }

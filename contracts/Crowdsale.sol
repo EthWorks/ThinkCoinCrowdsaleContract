@@ -22,6 +22,7 @@ contract Crowdsale is Ownable, Pausable {
   address public approver; // approves proposed mintages
   mapping(address => uint256) public mintProposals;
   mapping(address => uint256) public mintLockedProposals;
+  uint256 public proposedTotal = 0;
   uint256 public saleCap;
   uint256 public saleStartTime;
   uint256 public saleEndTime;
@@ -38,9 +39,13 @@ contract Crowdsale is Ownable, Pausable {
     require(_saleStartTime < _saleEndTime);
     require(_saleEndTime > now);
     require(_lockingPeriod > 0);
+    require(_proposer != _approver);
+    require(_saleStartTime >= now);
+    require(_saleCap <= _token.cap());
+    require(address(_token) != 0x0);
 
     token = _token;
-    lockingContract = new LockingContract(token, saleEndTime + _lockingPeriod);    
+    lockingContract = new LockingContract(token, _lockingPeriod);    
     proposer = _proposer;
     approver = _approver;
     saleCap = _saleCap;
@@ -84,19 +89,33 @@ contract Crowdsale is Ownable, Pausable {
   }
 
   function proposeMint(address _beneficiary, uint256 _tokenAmount) public onlyProposer saleStarted saleNotEnded
-                                                                          notExceedingSaleCap(_tokenAmount) {
+                                                                          notExceedingSaleCap(proposedTotal.add(_tokenAmount)) {
     require(_tokenAmount > 0);
     require(mintProposals[_beneficiary] == 0);
+    proposedTotal = proposedTotal.add(_tokenAmount);
     mintProposals[_beneficiary] = _tokenAmount;
     MintProposed(_beneficiary, _tokenAmount);
   }
 
   function proposeMintLocked(address _beneficiary, uint256 _tokenAmount) public onlyProposer saleStarted saleNotEnded
-                                                                         notExceedingSaleCap(_tokenAmount) {
+                                                                         notExceedingSaleCap(proposedTotal.add(_tokenAmount)) {
     require(_tokenAmount > 0);
     require(mintLockedProposals[_beneficiary] == 0);
+    proposedTotal = proposedTotal.add(_tokenAmount);
     mintLockedProposals[_beneficiary] = _tokenAmount;
     MintLockedProposed(_beneficiary, _tokenAmount);
+  }
+
+  function clearProposal(address _beneficiary) public {
+    require(msg.sender == proposer || msg.sender == approver);
+    proposedTotal = proposedTotal.sub(mintProposals[_beneficiary]);
+    mintProposals[_beneficiary] = 0;
+  }
+
+  function clearProposalLocked(address _beneficiary) public {
+    require(msg.sender == proposer || msg.sender == approver);
+    proposedTotal = proposedTotal.sub(mintLockedProposals[_beneficiary]);
+    mintLockedProposals[_beneficiary] = 0;
   }
 
   function approveMint(address _beneficiary, uint256 _tokenAmount) public onlyApprover saleStarted
@@ -125,6 +144,7 @@ contract Crowdsale is Ownable, Pausable {
   }
 
   function finishMinting() public onlyOwner saleEnded {
+    require(proposedTotal == 0);
     token.finishMinting();
     transferTokenOwnership();
   }
@@ -134,16 +154,14 @@ contract Crowdsale is Ownable, Pausable {
   }
 
   function changeProposer(address _newProposer) public onlyOwner {
+    require(_newProposer != approver);
     proposer = _newProposer;
     ProposerChanged(_newProposer);
   }
 
   function changeApprover(address _newApprover) public onlyOwner {
+    require(_newApprover != proposer);
     approver = _newApprover;
     ApproverChanged(_newApprover);
-  }
-
-  function() public payable {
-    revert();
   }
 }

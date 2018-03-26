@@ -149,12 +149,20 @@ describe('LockingContract', () => {
       expect(balance).to.eq.BN(100);
     });
 
-    it('should allow to release by anyone', async () => {
+    it('should allow to release by the beneficiary', async () => {
       await advanceToAfterLockingPeriod();
       await finishMinting();
-      await releaseTokens(client1, notTheOwner);
+      await releaseTokens(client1, client1);
       const balance = await balanceOf(client1);
       expect(balance).to.eq.BN(100);
+    });
+
+    it('should not allow to release by anyone', async () => {
+      await advanceToAfterLockingPeriod();
+      await finishMinting();
+      await expectThrow(releaseTokens(client1, notTheOwner));
+      const balance = await balanceOf(client1);
+      expect(balance).to.be.zero;
     });
 
     it('should not allow to release the tokens when locked', async () => {

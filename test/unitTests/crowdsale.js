@@ -87,6 +87,7 @@ describe('Crowdsale', () => {
     
   const mintingFinished = async () => tokenContract.methods.mintingFinished().call({from: tokenDeployer});
   const balanceOf = async (client) => tokenContract.methods.balanceOf(client).call({from: saleOwner});
+  const getProposedTotal = async () => saleContract.methods.proposedTotal().call({from: saleOwner});
   const changeProposer = async (newProposer, from) => saleContract.methods.changeProposer(newProposer).send({from});
   const changeApprover = async (newApprover, from) => saleContract.methods.changeApprover(newApprover).send({from});
   const transferTokenOwnership = async (from) => saleContract.methods.transferTokenOwnership().send({from});
@@ -114,6 +115,12 @@ describe('Crowdsale', () => {
 
   const getMintLockedProposal = async (beneficiary) =>
     saleContract.methods.mintLockedProposals(beneficiary).call({from: saleOwner});
+
+  const clearProposal = async (beneficiary, from) =>
+    saleContract.methods.clearProposal(beneficiary).send({from});
+
+  const clearProposalLocked = async (beneficiary, from) =>
+    saleContract.methods.clearProposalLocked(beneficiary).send({from});
 
   describe('Changing owner, proposer and approver', async () => {
     const testShouldChangeProposer = async (from = saleOwner) => {
@@ -282,6 +289,18 @@ describe('Crowdsale', () => {
       it('should not allow to propose mint locked more than the sale cap',
         async () => testShouldNotProposeMintLocked(contributor, saleCap.add(new BN('1')), proposer));
 
+      it('should not allow to propose mint more than the sale cap in total',
+        async () => {
+          await testShouldProposeMintLocked(contributor, saleCap, proposer);
+          await testShouldNotProposeMint(contributor, new BN('1'), proposer);
+        });
+
+      it('should not allow to propose mint locked more than the sale cap in total',
+        async () => {
+          await testShouldProposeMint(contributor, saleCap, proposer);
+          await testShouldNotProposeMintLocked(contributor, new BN('1'), proposer);
+        });
+
       it('should not allow to propose mint twice for the same person', async () => {
         await testShouldProposeMint(contributor, contributionAmount, proposer);
         await testShouldNotProposeMint(contributor, differentAmount, proposer);
@@ -295,6 +314,34 @@ describe('Crowdsale', () => {
       it('should allow to propose mint and propose mint locked for the same person', async () => {
         await testShouldProposeMintLocked(contributor, contributionAmount, proposer);
         await testShouldProposeMint(contributor, differentAmount, proposer);
+      });
+
+      it('should increase total amount of proposed tokens', async () => {
+        await testShouldProposeMintLocked(contributor, contributionAmount, proposer);
+        await testShouldProposeMint(contributor, differentAmount, proposer);
+        expect(await getProposedTotal()).to.eq.BN(contributionAmount.add(differentAmount));
+      });
+
+      it('should allow to clear proposal', async () => {
+        await testShouldProposeMint(contributor, differentAmount, proposer);
+        await testShouldProposeMintLocked(contributor, contributionAmount, proposer);
+        await clearProposal(contributor, proposer);
+        expect(await getProposedTotal()).to.eq.BN(contributionAmount);
+      });
+
+      it('should allow to clear locked proposal', async () => {
+        await testShouldProposeMint(contributor, differentAmount, proposer);
+        await testShouldProposeMintLocked(contributor, contributionAmount, proposer);
+        await clearProposalLocked(contributor, proposer);
+        expect(await getProposedTotal()).to.eq.BN(differentAmount);
+      });
+
+      it('should not allow to clear proposal by unauthorised party', async () => {
+        await testShouldProposeMint(contributor, differentAmount, proposer);
+        await testShouldProposeMintLocked(contributor, contributionAmount, proposer);
+        await expectThrow(clearProposal(contributor, contributor));
+        await expectThrow(clearProposalLocked(contributor, contributor));
+        expect(await getProposedTotal()).to.eq.BN(contributionAmount.add(differentAmount));
       });
     });
 
