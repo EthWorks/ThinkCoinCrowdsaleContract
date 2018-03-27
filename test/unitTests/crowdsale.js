@@ -19,6 +19,7 @@ describe('Crowdsale', () => {
   let saleOwner;
   let saleContractAddress;
   let lockingContract;
+  let lockingContractAddress;
   let accounts;
   let proposer;
   let approver;
@@ -26,6 +27,7 @@ describe('Crowdsale', () => {
   let altApprover;
   let lockedContributor;
   let contributor;
+  let externalMinter;
   const tokenCap = new BN(web3.utils.toWei('500000000'));
   const saleCap = new BN(web3.utils.toWei('300000000'));
   const lockingPeriod = duration.days(30).mul(new BN(3));
@@ -34,7 +36,7 @@ describe('Crowdsale', () => {
 
   before(async () => {
     accounts = await web3.eth.getAccounts();
-    [, tokenDeployer, saleOwner, proposer, approver, altProposer, altApprover, lockedContributor, contributor] = accounts;
+    [, tokenDeployer, saleOwner, proposer, approver, altProposer, altApprover, lockedContributor, contributor, externalMinter] = accounts;
   });
 
   const deployContracts = async () => {
@@ -61,7 +63,7 @@ describe('Crowdsale', () => {
     saleContractAddress = saleContract.options.address;
 
     // Locking contract
-    const lockingContractAddress = await saleContract.methods.lockingContract().call({from: saleOwner});
+    lockingContractAddress = await saleContract.methods.lockingContract().call({from: saleOwner});
     lockingContract = await new web3.eth.Contract(lockingJson.abi, lockingContractAddress);
   };
 
@@ -121,6 +123,15 @@ describe('Crowdsale', () => {
 
   const clearProposalLocked = async (beneficiary, from) =>
     saleContract.methods.clearProposalLocked(beneficiary).send({from});
+
+  const externalMint = async (beneficiary, amount, from) =>
+    saleContract.methods.externalMint(beneficiary, amount).send({from});
+
+  const increaseExternalMintApproval = async (minter, amount, from) =>
+    saleContract.methods.increaseExternalMintApproval(minter, amount).send({from});
+
+  const getExternalMintApproval = async (account) =>
+    saleContract.methods.externalMintApprovals(account).call({from: saleOwner});
 
   describe('Changing owner, proposer and approver', async () => {
     const testShouldChangeProposer = async (from = saleOwner) => {
@@ -553,6 +564,48 @@ describe('Crowdsale', () => {
         it('should not allow to finish minting by approver', 
           async () => testShouldNotFinishMinting(approver));
       });
+    });
+  });
+
+  describe('External minting', async () => {
+    const contributionAmount = new BN('1000');
+    it('should allow to increase external minting approval', async () => {
+      expect(await getExternalMintApproval(externalMinter)).to.be.eq.zero;
+      await increaseExternalMintApproval(externalMinter, contributionAmount, saleOwner);
+      expect(await getExternalMintApproval(externalMinter)).to.eq.BN(contributionAmount);
+    });
+
+    it('should not allow to increase external minting approval by a third party', async () => {
+      await expectThrow(increaseExternalMintApproval(externalMinter, contributionAmount, contributor));
+      expect(await getExternalMintApproval(externalMinter)).to.be.eq.zero;
+    });
+
+    it('should allow to mint allowed amount', async () => {
+      await increaseExternalMintApproval(externalMinter, contributionAmount, saleOwner);
+      await externalMint(contributor, contributionAmount, externalMinter);
+      expect(await balanceOf(contributor)).to.eq.BN(contributionAmount);
+    });
+
+    it('should not allow to mint allowed amount by a third party', async () => {
+      await increaseExternalMintApproval(externalMinter, contributionAmount, saleOwner);
+      await expectThrow(externalMint(contributor, contributionAmount, contributor));
+      expect(await balanceOf(contributor)).to.eq.zero;
+    });
+
+    it('should not allow to mint more than allowed', async () => {
+      await increaseExternalMintApproval(externalMinter, contributionAmount, saleOwner);
+      await expectThrow(externalMint(contributor, contributionAmount.add(contributionAmount), externalMinter));
+      expect(await balanceOf(contributor)).to.eq.zero;
+    });
+
+    it('should allow to mint allowed amount in parts', async () => {
+      const part1 = contributionAmount.div(new BN('2'));
+      const part2 = contributionAmount.sub(part1);
+      await increaseExternalMintApproval(externalMinter, contributionAmount, saleOwner);
+      await externalMint(contributor, part1, externalMinter);
+      await externalMint(approver, part2, externalMinter);
+      expect(await balanceOf(contributor)).to.eq.BN(part1);
+      expect(await balanceOf(approver)).to.eq.BN(part2);
     });
   });
 });

@@ -39,12 +39,8 @@ contract LockingContract is Ownable {
     return tokens[_owner];
   }
 
-  // Should only be done from another contract.
-  // To ensure that the LockingContract can release all noted tokens later,
-  // one should mint/transfer tokens to the LockingContract's account prior to noting
   function noteTokens(address _beneficiary, uint256 _tokenAmount) external onlyOwner onlyWhenLocked {
-    uint256 tokenBalance = tokenContract.balanceOf(this);
-    require(tokenBalance == totalTokens.add(_tokenAmount));
+    ensureTokensAvailable(_tokenAmount);
 
     tokens[_beneficiary] = tokens[_beneficiary].add(_tokenAmount);
     totalTokens = totalTokens.add(_tokenAmount);
@@ -65,5 +61,12 @@ contract LockingContract is Ownable {
     require(_newUnlockTime < unlockTime);
     unlockTime = _newUnlockTime;
     ReducedLockingTime(_newUnlockTime);
+  }
+
+  function ensureTokensAvailable(uint256 _tokenAmount) private {
+    uint256 tokenBalance = tokenContract.balanceOf(this);
+    require(tokenBalance >= totalTokens.add(_tokenAmount)); /* greater or equal to remove possibility of
+                                                               a malicious actor transferring tokens
+                                                               and breaking the contract */
   }
 }

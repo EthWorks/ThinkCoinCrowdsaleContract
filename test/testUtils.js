@@ -8,7 +8,7 @@ export function createWeb3() {
   const web3 = new Web3();
   const Ganache = require('ganache-core');
   const ganacheOptions = {
-    accounts: (new Array(10)).fill({balance: web3.utils.toWei('90000000')})
+    accounts: (new Array(15)).fill({balance: web3.utils.toWei('90000000')})
   };
   web3.setProvider(Ganache.provider(ganacheOptions));
   return web3;
@@ -48,7 +48,7 @@ export async function expectThrow(promise) {
     );
     return;
   }
-  assert.fail('Expected throw not received');
+  assert(false, 'Expected throw not received');
 }
 
 export async function latestTime(web3) {

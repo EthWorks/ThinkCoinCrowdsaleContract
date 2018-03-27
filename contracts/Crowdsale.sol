@@ -3,9 +3,10 @@ import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
 import 'zeppelin-solidity/contracts/lifecycle/Pausable.sol';
 import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 import './ThinkCoin.sol';
-import './LockingContract.sol';
+import './SelfMintingLockingContract.sol';
+import './ExternalMinter.sol';
 
-contract Crowdsale is Ownable, Pausable {
+contract Crowdsale is Ownable, Pausable, ExternalMinter {
   using SafeMath for uint256;
 
   event MintProposed(address indexed _beneficiary, uint256 _tokenAmount);
@@ -17,11 +18,12 @@ contract Crowdsale is Ownable, Pausable {
   event ApproverChanged(address _newApprover);
 
   ThinkCoin public token;
-  LockingContract public lockingContract;
+  SelfMintingLockingContract public lockingContract;
   address public proposer; // proposes mintages of tokens
   address public approver; // approves proposed mintages
   mapping(address => uint256) public mintProposals;
   mapping(address => uint256) public mintLockedProposals;
+  mapping(address => uint256) public externalMintApprovals;
   uint256 public proposedTotal = 0;
   uint256 public saleCap;
   uint256 public saleStartTime;
@@ -45,7 +47,7 @@ contract Crowdsale is Ownable, Pausable {
     require(address(_token) != 0x0);
 
     token = _token;
-    lockingContract = new LockingContract(token, _lockingPeriod);    
+    lockingContract = new SelfMintingLockingContract(token, _lockingPeriod);    
     proposer = _proposer;
     approver = _approver;
     saleCap = _saleCap;
@@ -132,7 +134,7 @@ contract Crowdsale is Ownable, Pausable {
     require(_tokenAmount > 0);
     require(mintLockedProposals[_beneficiary] == _tokenAmount);
     mintLockedProposals[_beneficiary] = 0;
-    token.mint(lockingContract, _tokenAmount);
+    increaseExternalMintApproval(lockingContract, _tokenAmount);
     lockingContract.noteTokens(_beneficiary, _tokenAmount);
     MintLockedApproved(_beneficiary, _tokenAmount);
   }
@@ -163,5 +165,18 @@ contract Crowdsale is Ownable, Pausable {
     require(_newApprover != proposer);
     approver = _newApprover;
     ApproverChanged(_newApprover);
+  }
+
+  // override
+  function externalMint(address _beneficiary, uint256 _tokenAmount) external {
+    require(_tokenAmount > 0);
+    require(externalMintApprovals[msg.sender] >= _tokenAmount);
+    externalMintApprovals[msg.sender] = externalMintApprovals[msg.sender].sub(_tokenAmount);
+    token.mint(_beneficiary, _tokenAmount);
+  }
+
+  function increaseExternalMintApproval(address minter, uint256 amount) public {
+    require(msg.sender == approver || msg.sender == owner);
+    externalMintApprovals[minter] = externalMintApprovals[minter].add(amount);
   }
 }
