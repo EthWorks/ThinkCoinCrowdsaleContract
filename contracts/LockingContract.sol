@@ -6,6 +6,10 @@ import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 contract LockingContract is Ownable {
   using SafeMath for uint256;
 
+  event NotedTokens(address indexed _beneficiary, uint256 _tokenAmount);
+  event ReleasedTokens(address indexed _beneficiary);
+  event ReducedLockingTime(uint256 _newUnlockTime);
+
   ERC20 public tokenContract;
   mapping(address => uint256) public tokens;
   uint256 public totalTokens;
@@ -44,18 +48,21 @@ contract LockingContract is Ownable {
 
     tokens[_beneficiary] = tokens[_beneficiary].add(_tokenAmount);
     totalTokens = totalTokens.add(_tokenAmount);
+    NotedTokens(_beneficiary, _tokenAmount);
   }
 
   function releaseTokens(address _beneficiary) public onlyWhenUnlocked {
     uint256 amount = tokens[_beneficiary];
     tokens[_beneficiary] = 0;
-    tokenContract.transfer(_beneficiary, amount);
+    require(tokenContract.transfer(_beneficiary, amount)); 
     totalTokens = totalTokens.sub(amount);
+    ReleasedTokens(_beneficiary);
   }
 
   function reduceLockingTime(uint256 _newUnlockTime) public onlyOwner onlyWhenLocked {
     require(_newUnlockTime >= now);
     require(_newUnlockTime < unlockTime);
     unlockTime = _newUnlockTime;
+    ReducedLockingTime(_newUnlockTime);
   }
 }
