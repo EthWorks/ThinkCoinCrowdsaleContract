@@ -2,6 +2,7 @@ pragma solidity ^0.4.19;
 
 
 
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -47,6 +48,50 @@ library SafeMath {
     return c;
   }
 }
+
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
 
 
 
@@ -107,6 +152,9 @@ contract BasicToken is ERC20Basic {
   }
 
 }
+
+
+
 
 
 
@@ -221,49 +269,6 @@ contract StandardToken is ERC20, BasicToken {
 
 
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
@@ -327,17 +332,13 @@ contract ThinkCoin is MintableToken {
 
   // override
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(mintingFinished == true);
+    require(mintingFinished);
     return super.transfer(_to, _value);
   }
 
   // override
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(mintingFinished == true);
+    require(mintingFinished);
     return super.transferFrom(_from, _to, _value);
-  }
-
-  function() public payable {
-    revert();
   }
 }
