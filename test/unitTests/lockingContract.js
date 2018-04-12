@@ -19,6 +19,7 @@ describe('LockingContract', () => {
   let notTheOwner;
   let deploymentTime; 
   let lockingContractAddress;
+  let unlockTime;
   const web3 = createWeb3();
   const {BN} = web3.utils;
   const duration = durationInit(web3);
@@ -55,9 +56,11 @@ describe('LockingContract', () => {
   beforeEach(async () => {
     tokenContract = await deployContract(web3, thinkCoinJson, tokenOwner,
       [tokenCap]);
-    lockingContract = await deployContract(web3, lockingJson, lockingOwner,
-      [tokenContract.options.address, lockingDuration]);
+
     deploymentTime = new BN(await latestTime(web3));
+    unlockTime = deploymentTime.add(lockingDuration);
+    lockingContract = await deployContract(web3, lockingJson, lockingOwner,
+      [tokenContract.options.address, unlockTime]);
     lockingContractAddress = lockingContract.options.address;
   });
 

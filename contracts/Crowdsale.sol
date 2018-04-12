@@ -45,7 +45,7 @@ contract Crowdsale is Ownable, Pausable {
     require(address(_token) != 0x0);
 
     token = _token;
-    lockingContract = new LockingContract(token, _lockingPeriod);    
+    lockingContract = new LockingContract(token, _saleEndTime.add(_lockingPeriod));    
     proposer = _proposer;
     approver = _approver;
     saleCap = _saleCap;

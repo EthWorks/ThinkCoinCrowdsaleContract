@@ -29,9 +29,9 @@ contract LockingContract is Ownable {
     _;
   }
 
-  function LockingContract(ERC20 _tokenContract, uint256 _lockingDuration) public {
-    require(_lockingDuration > 0);
-    unlockTime = now.add(_lockingDuration);
+  function LockingContract(ERC20 _tokenContract, uint256 _unlockTime) public {
+    require(_unlockTime > 0);
+    unlockTime = _unlockTime;
     tokenContract = _tokenContract;
   }
 
