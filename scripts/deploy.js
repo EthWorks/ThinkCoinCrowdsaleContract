@@ -5,7 +5,8 @@ var crowdsaleJson = require('../build/contracts/Crowdsale.json');
 
 var tokenAddress = '';
 var crowdsaleAddress = '';
-var proposer = '0x0';
+var proposer = '0x1AA93b0f563E1AE1e2f71C2295e1AD556899EeDD';
+var approver = '0x3511A9c8f28a47c96630E9358eF6c101f0351034';
 
 var args = process.argv.slice(2);
 if (args.length < 2 || args[0] != '--port') {
@@ -19,7 +20,7 @@ var tokenCap = web3.utils.toWei('500000000');
 var lockingPeriod = 60*60*24*30*3; // 3M
 var saleCap = web3.utils.toWei('300000000');
 var saleStartTime = 1522713600; // 04/03/2018 @ 12:00am (UTC)
-var saleEndTime = 1525089600; // 04/30/2018 @ 12:00pm (UTC)
+var saleEndTime = 1527292799; // 05/25/2018 @ 11:59pm (UTC)
 
 function handleError(err) {
   console.error(err.toString());
@@ -46,7 +47,7 @@ function deployCrowdsale(owner, tokenContract) {
     tokenContract.options.address,
     lockingPeriod,
     proposer, // proposer
-    owner, // approver
+    approver, // approver
     saleCap,
     saleStartTime,
     saleEndTime

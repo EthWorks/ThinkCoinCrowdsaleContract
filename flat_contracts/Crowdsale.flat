@@ -418,9 +418,9 @@ contract LockingContract is Ownable {
     _;
   }
 
-  function LockingContract(ERC20 _tokenContract, uint256 _lockingDuration) public {
-    require(_lockingDuration > 0);
-    unlockTime = now.add(_lockingDuration);
+  function LockingContract(ERC20 _tokenContract, uint256 _unlockTime) public {
+    require(_unlockTime > 0);
+    unlockTime = _unlockTime;
     tokenContract = _tokenContract;
   }
 
@@ -495,12 +495,11 @@ contract Crowdsale is Ownable, Pausable {
     require(_saleEndTime > now);
     require(_lockingPeriod > 0);
     require(_proposer != _approver);
-    require(_saleStartTime >= now);
     require(_saleCap <= _token.cap());
     require(address(_token) != 0x0);
 
     token = _token;
-    lockingContract = new LockingContract(token, _lockingPeriod);    
+    lockingContract = new LockingContract(token, _saleEndTime.add(_lockingPeriod));    
     proposer = _proposer;
     approver = _approver;
     saleCap = _saleCap;

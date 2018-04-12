@@ -40,7 +40,6 @@ contract Crowdsale is Ownable, Pausable {
     require(_saleEndTime > now);
     require(_lockingPeriod > 0);
     require(_proposer != _approver);
-    require(_saleStartTime >= now);
     require(_saleCap <= _token.cap());
     require(address(_token) != 0x0);
 
